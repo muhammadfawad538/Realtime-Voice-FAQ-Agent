@@ -1,0 +1,69 @@
+{
+  "name": "browser-voice-faq-agent",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser-based voice FAQ agent with Gemini API and Edge TTS",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:contract": "vitest run tests/contract/",
+    "test:integration": "vitest run tests/integration/",
+    "test:unit": "vitest run tests/unit/",
+    "test:e2e": "playwright test",
+    "test:ui": "vitest --ui",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
+    "typecheck": "tsc --noEmit",
+    "seed-faqs": "tsx scripts/seed-faqs.ts"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "edge-tts-js": "^2.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@testing-library/jest-dom": "^6.6.2",
+    "@testing-library/react": "^16.0.1",
+    "@types/node": "^22.8.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/w3c-web-speech-api": "^1.0.12",
+    "@typescript-eslint/eslint-plugin": "^8.11.0",
+    "@typescript-eslint/parser": "^8.11.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.11.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "voice-agent",
+    "faq",
+    "gemini",
+    "edge-tts",
+    "web-speech-api",
+    "browser",
+    "react",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT"
+}

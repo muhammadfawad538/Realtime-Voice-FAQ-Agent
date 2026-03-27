@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Voice FAQ Agent Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 15px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .listening {
+            background-color: #e8f4fd;
+            color: #2980b9;
+            border: 1px solid #3498db;
+        }
+
+        .processing {
+            background-color: #fef9e7;
+            color: #f39c12;
+            border: 1px solid #f1c40f;
+        }
+
+        .ready {
+            background-color: #eafaf1;
+            color: #27ae60;
+            border: 1px solid #2ecc71;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .stop-btn {
+            background-color: #e74c3c;
+        }
+
+        .stop-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .transcript {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 60px;
+            font-size: 16px;
+        }
+
+        .response {
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 60px;
+            font-size: 16px;
+        }
+
+        .instructions {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .capability-check {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-radius: 5px;
+        }
+
+        .unsupported {
+            background-color: #fadbd8;
+            color: #c0392b;
+            text-align: center;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Browser Voice FAQ Agent</h1>
+
+        <div id="capabilityCheck" class="capability-check">
+            <h3>Browser Capability Check</h3>
+            <p id="capabilityStatus">Checking browser capabilities...</p>
+        </div>
+
+        <div id="unsupportedMessage" class="unsupported" style="display: none;">
+            <h3>⚠️ Voice Features Not Supported</h3>
+            <p>Your browser does not support the required voice features. This demo requires Chrome, Edge, or Firefox with experimental features enabled.</p>
+        </div>
+
+        <div id="mainInterface" style="display: none;">
+            <div id="status" class="status ready">
+                Ready to listen. Click "Start" to begin.
+            </div>
+
+            <div class="instructions">
+                <p><strong>How to use:</strong> Click "Start Listening" and speak your question. The agent will recognize your speech, process it through the FAQ system, and respond audibly.</p>
+            </div>
+
+            <div class="controls">
+                <button id="startBtn">🎤 Start Listening</button>
+                <button id="stopBtn" class="stop-btn" disabled>⏹️ Stop</button>
+                <button id="resetBtn">🔄 Reset</button>
+            </div>
+
+            <h3>Recognized Speech:</h3>
+            <div id="transcript" class="transcript">Waiting for speech input...</div>
+
+            <h3>Agent Response:</h3>
+            <div id="response" class="response">Waiting for response...</div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusDiv = document.getElementById('status');
+        const transcriptDiv = document.getElementById('transcript');
+        const responseDiv = document.getElementById('response');
+        const capabilityStatus = document.getElementById('capabilityStatus');
+        const capabilityCheck = document.getElementById('capabilityCheck');
+        const unsupportedMessage = document.getElementById('unsupportedMessage');
+        const mainInterface = document.getElementById('mainInterface');
+
+        // Check browser capabilities
+        function checkCapabilities() {
+            const hasSpeechRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+            const hasSpeechSynthesis = !!(window.speechSynthesis);
+            const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+            const capabilities = {
+                speechRecognition: hasSpeechRecognition,
+                speechSynthesis: hasSpeechSynthesis,
+                mediaDevices: hasMediaDevices,
+                allRequired: hasSpeechRecognition && hasSpeechSynthesis && hasMediaDevices
+            };
+
+            capabilityStatus.innerHTML = `
+                <p>🎤 Speech Recognition: ${capabilities.speechRecognition ? '✅ Supported' : '❌ Not Supported'}</p>
+                <p>🔊 Speech Synthesis: ${capabilities.speechSynthesis ? '✅ Supported' : '❌ Not Supported'}</p>
+                <p>🎵 Microphone Access: ${capabilities.mediaDevices ? '✅ Supported' : '❌ Not Supported'}</p>
+                <p><strong>All Required: ${capabilities.allRequired ? '✅ YES' : '❌ NO'}</strong></p>
+            `;
+
+            if (capabilities.allRequired) {
+                mainInterface.style.display = 'block';
+                capabilityCheck.style.display = 'none';
+            } else {
+                unsupportedMessage.style.display = 'block';
+                capabilityCheck.style.display = 'none';
+            }
+
+            return capabilities;
+        }
+
+        // Voice agent simulation
+        class VoiceAgentDemo {
+            constructor() {
+                this.isListening = false;
+                this.recognition = null;
+                this.faqDatabase = [
+                    {
+                        question: "return policy",
+                        answer: "Our return policy allows returns within 30 days of purchase with original receipt. Items must be in new, unused condition with all original packaging."
+                    },
+                    {
+                        question: "shipping time",
+                        answer: "Standard shipping takes 5-7 business days. Express shipping is available for an additional fee and delivers in 2-3 business days."
+                    },
+                    {
+                        question: "international shipping",
+                        answer: "Yes, we offer international shipping to over 100 countries. Shipping costs and delivery times vary by destination."
+                    },
+                    {
+                        question: "payment methods",
+                        answer: "We accept all major credit cards, PayPal, Apple Pay, and Google Pay. For corporate customers, we also offer net-30 payment terms."
+                    },
+                    {
+                        question: "warranty",
+                        answer: "All our products come with a standard 1-year warranty. Extended warranties are available for purchase for up to 3 years coverage."
+                    }
+                ];
+
+                this.initRecognition();
+            }
+
+            initRecognition() {
+                if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = true;
+                    this.recognition.lang = 'en-US';
+
+                    this.recognition.onresult = (event) => {
+                        let finalTranscript = '';
+                        let interimTranscript = '';
+
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            const transcript = event.results[i][0].transcript;
+                            if (event.results[i].isFinal) {
+                                finalTranscript += transcript + ' ';
+                            } else {
+                                interimTranscript += transcript;
+                            }
+                        }
+
+                        transcriptDiv.textContent = finalTranscript || interimTranscript;
+                    };
+
+                    this.recognition.onend = () => {
+                        if (this.isListening) {
+                            // Automatically restart recognition for continuous listening
+                            this.recognition.start();
+                        } else {
+                            this.updateUIState('ready');
+                        }
+                    };
+
+                    this.recognition.onerror = (event) => {
+                        console.error('Speech recognition error', event.error);
+                        this.updateUIState('ready');
+                    };
+                }
+            }
+
+            startListening() {
+                if (!this.recognition) {
+                    alert('Speech recognition not supported in this browser');
+                    return;
+                }
+
+                this.isListening = true;
+                this.recognition.start();
+                this.updateUIState('listening');
+            }
+
+            stopListening() {
+                if (!this.recognition) return;
+
+                this.isListening = false;
+                this.recognition.stop();
+                this.updateUIState('ready');
+            }
+
+            updateUIState(state) {
+                switch(state) {
+                    case 'listening':
+                        statusDiv.textContent = 'Listening... Speak now.';
+                        statusDiv.className = 'status listening';
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        break;
+                    case 'processing':
+                        statusDiv.textContent = 'Processing your question...';
+                        statusDiv.className = 'status processing';
+                        startBtn.disabled = true;
+                        stopBtn.disabled = true;
+                        break;
+                    case 'ready':
+                        statusDiv.textContent = 'Ready to listen. Click "Start" to begin.';
+                        statusDiv.className = 'status ready';
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        break;
+                }
+            }
+
+            findAnswer(question) {
+                const lowerQuestion = question.toLowerCase();
+
+                // Simple keyword matching
+                for (const faq of this.faqDatabase) {
+                    if (lowerQuestion.includes(faq.question)) {
+                        return faq.answer;
+                    }
+                }
+
+                // If no direct match, try to find relevant keywords
+                for (const faq of this.faqDatabase) {
+                    if (this.containsAnyKeyword(lowerQuestion, faq.question.split(' '))) {
+                        return faq.answer;
+                    }
+                }
+
+                return "I'm sorry, I couldn't find an answer to your question in our FAQ database. Please contact customer support for assistance.";
+            }
+
+            containsAnyKeyword(text, keywords) {
+                return keywords.some(keyword => text.includes(keyword.toLowerCase()));
+            }
+
+            respond(answer) {
+                responseDiv.textContent = answer;
+
+                // Use speech synthesis to speak the answer
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(answer);
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0;
+
+                    utterance.onend = () => {
+                        this.updateUIState('ready');
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+        }
+
+        // Initialize the demo
+        const voiceAgent = new VoiceAgentDemo();
+
+        // Check capabilities on load
+        window.onload = function() {
+            checkCapabilities();
+        };
+
+        // Event listeners
+        startBtn.addEventListener('click', () => {
+            voiceAgent.startListening();
+        });
+
+        stopBtn.addEventListener('click', () => {
+            voiceAgent.stopListening();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            transcriptDiv.textContent = 'Waiting for speech input...';
+            responseDiv.textContent = 'Waiting for response...';
+            voiceAgent.stopListening();
+        });
+
+        // Auto-process transcript changes to simulate the LLM part
+        let lastTranscript = '';
+        setInterval(() => {
+            const currentTranscript = transcriptDiv.textContent;
+            if (currentTranscript !== lastTranscript &&
+                currentTranscript !== 'Waiting for speech input...' &&
+                currentTranscript.trim() !== '') {
+
+                // Only process if we're not already processing
+                if (!statusDiv.classList.contains('processing') &&
+                    !statusDiv.classList.contains('listening')) {
+
+                    lastTranscript = currentTranscript;
+
+                    // Simulate processing state
+                    voiceAgent.updateUIState('processing');
+
+                    // Simulate API call delay
+                    setTimeout(() => {
+                        const answer = voiceAgent.findAnswer(currentTranscript);
+                        voiceAgent.respond(answer);
+                    }, 800); // Simulate API processing time
+                }
+            }
+        }, 500);
+    </script>
+</body>
+</html>

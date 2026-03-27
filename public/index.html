@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Browser-based voice FAQ agent with Gemini API and Edge TTS" />
+    <meta name="theme-color" content="#4f46e5" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Accessibility: Skip to main content link target -->
+    <title>Voice FAQ Agent</title>
+  </head>
+  <body>
+    <!-- Accessibility: Skip link for keyboard users -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Main app container -->
+    <div id="root"></div>
+    
+    <!-- Entry point -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- No-JS fallback -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center;">
+        <h1>Voice FAQ Agent</h1>
+        <p>This application requires JavaScript to run. Please enable JavaScript in your browser settings.</p>
+      </div>
+    </noscript>
+  </body>
+</html>
